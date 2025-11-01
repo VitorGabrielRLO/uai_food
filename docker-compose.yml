@@ -1,0 +1,16 @@
+# Em: ~/uaifood-app/uai-food/docker-compose.yml
+
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15 # Imagem oficial do Postgres
+    container_name: uaifood-postgres-db
+    restart: always
+    ports:
+      - "5432:5432" # Expõe a porta do banco para o seu "localhost"
+    environment:
+      POSTGRES_USER: uaifood
+      POSTGRES_PASSWORD: uaifoodpassword
+      POSTGRES_DB: uaifood_db
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
