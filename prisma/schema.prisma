@@ -1,0 +1,120 @@
+// Em: /prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Seus Enums
+enum UserType {
+  CLIENT
+  ADMIN
+}
+
+enum PaymentMethod {
+  CASH
+  DEBIT
+  CREDIT
+  PIX
+}
+
+// Seus Modelos
+model User {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @unique // Telefone deve ser único para login
+  userType  UserType  @default(CLIENT)
+  password  String // Você vai armazenar o hash (bcrypt)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relações
+  addresses Address[] // Um usuário pode ter N endereços
+  orders    Order[]   // Um usuário pode fazer N pedidos
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  street    String
+  number    String
+  district  String
+  city      String
+  state     String
+  zipCode   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Chave Estrangeira para User
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  description String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relação
+  items Item[]
+}
+
+model Item {
+  id          String   @id @default(cuid())
+  description String
+  unitPrice   Float // "double" no diagrama é "Float" no Prisma
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Chave Estrangeira para Category
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  // Relação
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+}
+
+model Order {
+  id            String        @id @default(cuid())
+  status        String // Ex: "PENDING", "CONFIRMED", "IN_DELIVERY", "DELIVERED"
+  paymentMethod PaymentMethod
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Chave Estrangeira para User (o cliente)
+  // O diagrama chama de "userClient", vamos usar "userId"
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Relação
+  items OrderItem[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  // O diagrama não tem ID, mas é boa prática ter
+  id       String @id @default(cuid())
+  quantity Int
+
+  // Chave Estrangeira para Order
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Chave Estrangeira para Item
+  itemId String
+  item   Item   @relation(fields: [itemId], references: [id])
+
+  // Garante que o mesmo item não se repita no mesmo pedido
+  @@unique([orderId, itemId]) 
+  @@index([orderId])
+  @@index([itemId])
+}
