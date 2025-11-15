@@ -1,3 +1,5 @@
+// Em: src/app/layout.tsx
+
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -14,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'UAIFood - Gestão',
+  title: 'UAIFood',
   description: 'Gestão de pedidos UAIFood',
 };
 
@@ -28,7 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* 2. Envolver os 'children' com o AuthProvider */}
+        {/* 2. ESTA LINHA É A CORREÇÃO CRÍTICA */}
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
