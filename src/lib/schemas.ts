@@ -47,9 +47,21 @@ export const createOrderSchema = z.object({
   paymentMethod: z.enum(['CASH', 'DEBIT', 'CREDIT', 'PIX'], {
     errorMap: () => ({ message: 'Método de pagamento inválido' }),
   }),
+  addressId: z.string().cuid('Selecione um endereço válido'), // <--- NOVO CAMPO
   items: z.array(orderItemSchema).min(1, 'O pedido deve ter pelo menos um item'),
 });
 
 export const updateOrderStatusSchema = z.object({
   status: z.string().min(3, 'O status é obrigatório'),
+});
+
+// Em: src/lib/schemas.ts
+
+export const addressSchema = z.object({
+  street: z.string().min(3, 'Rua é obrigatória'),
+  number: z.string().min(1, 'Número é obrigatório'),
+  district: z.string().min(3, 'Bairro é obrigatório'),
+  city: z.string().min(3, 'Cidade é obrigatória'),
+  state: z.string().length(2, 'Estado deve ter 2 letras (ex: MG)'),
+  zipCode: z.string().min(8, 'CEP inválido').max(9, 'CEP inválido'),
 });

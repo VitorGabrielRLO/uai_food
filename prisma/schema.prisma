@@ -46,9 +46,10 @@ model Address {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Chave Estrangeira para User
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  orders Order[] // <--- ADICIONE ISSO: Relação inversa
 
   @@index([userId])
 }
@@ -82,17 +83,19 @@ model Item {
 
 model Order {
   id            String        @id @default(cuid())
-  status        String // Ex: "PENDING", "CONFIRMED", "IN_DELIVERY", "DELIVERED"
+  status        String
   paymentMethod PaymentMethod
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  // Chave Estrangeira para User (o cliente)
-  // O diagrama chama de "userClient", vamos usar "userId"
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  // Relação
+  // --- ADICIONE ESTAS DUAS LINHAS ---
+  addressId String? // Opcional para não quebrar pedidos antigos
+  address   Address? @relation(fields: [addressId], references: [id])
+  // ----------------------------------
+
   items OrderItem[]
 
   @@index([userId])

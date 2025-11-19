@@ -18,6 +18,7 @@ export async function GET() {
             phone: true,
           },
         },
+        address: true,
         items: {
           include: {
             item: {

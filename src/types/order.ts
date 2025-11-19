@@ -22,12 +22,23 @@ type OrderItemBase = {
 // --- Tipos Exportados ---
 
 // Item de Pedido Detalhado (para mostrar no carrinho/fila)
-export type DetailedOrderItem = OrderItemBase & {
+export type DetailedOrderItem = {
+  id: string;
+  quantity: number;
+  orderId: string;
+  itemId: string;
   item: Pick<Item, 'description' | 'unitPrice'>;
 };
 
 // Pedido Detalhado (para a fila do admin e "meus pedidos")
-export type DetailedOrder = OrderBase & {
+export type DetailedOrder = {
+  id: string;
+  status: string;
+  paymentMethod: PaymentMethod;
+  createdAt: string; // ou Date, dependendo de como vem do JSON
+  updatedAt: string;
+  userId: string;
   user: Pick<User, 'name' | 'phone'>;
+  address?: Address | null; // <--- NOVO CAMPO
   items: DetailedOrderItem[];
 };

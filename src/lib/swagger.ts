@@ -111,6 +111,64 @@ const options: swaggerJsdoc.Options = {
           },
         },
       },
+      '/api/addresses': {
+        get: {
+          tags: ['Endereços'],
+          summary: 'Lista os endereços do usuário',
+          description: 'Requer autenticação Bearer Token.',
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { 
+                description: 'Lista de endereços retornada com sucesso.',
+                content: {
+                    'application/json': {
+                      schema: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            street: { type: 'string', example: 'Av. Brasil' },
+                            number: { type: 'string', example: '123' },
+                            city: { type: 'string', example: 'Uberaba' },
+                          }
+                        },
+                      },
+                    },
+                  },
+            },
+            401: { description: 'Não autenticado.' },
+          },
+        },
+        post: {
+          tags: ['Endereços'],
+          summary: 'Cadastra um novo endereço',
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['street', 'number', 'district', 'city', 'state', 'zipCode'],
+                  properties: {
+                    street: { type: 'string', example: 'Av. Brasil' },
+                    number: { type: 'string', example: '100' },
+                    district: { type: 'string', example: 'Centro' },
+                    city: { type: 'string', example: 'São Paulo' },
+                    state: { type: 'string', maxLength: 2, example: 'SP' },
+                    zipCode: { type: 'string', example: '01000000' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            201: { description: 'Endereço criado.' },
+            400: { description: 'Dados inválidos.' },
+          },
+        },
+      },
       '/api/categories': {
         get: {
           tags: ['Cardápio'],
