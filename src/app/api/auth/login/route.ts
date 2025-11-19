@@ -5,6 +5,56 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '@/lib/prisma';
 import { loginSchema } from '@/lib/schemas';
 
+/**
+ * @openapi
+ * /api/auth/login:
+ * post:
+ * tags:
+ * - Autenticação
+ * summary: Autentica um usuário e retorna um token JWT
+ * description: Recebe telefone e senha para realizar o login.
+ * requestBody:
+ * required: true
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * properties:
+ * phone:
+ * type: string
+ * example: "34999998888"
+ * password:
+ * type: string
+ * format: password
+ * example: "123456"
+ * responses:
+ * '200':
+ * description: Login bem-sucedido. Retorna o usuário e o token.
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * properties:
+ * user:
+ * type: object
+ * properties:
+ * id:
+ * type: string
+ * name:
+ * type: string
+ * phone:
+ * type: string
+ * userType:
+ * type: string
+ * enum: [CLIENT, ADMIN]
+ * token:
+ * type: string
+ * '401':
+ * description: Não autorizado (senha inválida).
+ * '404':
+ * description: Usuário não encontrado (telefone inválido).
+ */
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();

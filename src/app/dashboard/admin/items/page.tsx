@@ -4,16 +4,12 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Category, Item } from '@prisma/client'; // Tipos do Prisma
+import { Category, Item } from '@/types/user'; // <--- CORREÇÃO AQUI
 import { api } from '@/lib/axios';
-import { itemSchema } from '@/lib/schemas'; // Nosso schema de criação de item
+import { itemSchema } from '@/lib/schemas';
 
-// O 'itemSchema' do Zod espera um 'unitPrice' como number.
-// Precisamos ajustar o schema para o formulário, que lê 'number' como string.
-// Ou, mais fácil, forçar a conversão no 'register' do react-hook-form.
 type ItemFormData = z.infer<typeof itemSchema>;
 
-// Tipo para o Item quando listado (com a categoria incluída)
 type ItemWithCategory = Item & {
   category: {
     description: string;
@@ -21,12 +17,10 @@ type ItemWithCategory = Item & {
 };
 
 export default function AdminItemsPage() {
-  // Estados da página
   const [items, setItems] = useState<ItemWithCategory[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Hook do formulário para "Criar Novo Item"
   const {
     register,
     handleSubmit,
@@ -36,16 +30,12 @@ export default function AdminItemsPage() {
     resolver: zodResolver(itemSchema),
   });
 
-  // --- Funções de API ---
-
-  // 1. Função para buscar todos os dados (Itens E Categorias)
   async function fetchData() {
     setIsLoading(true);
     try {
-      // Usamos Promise.all para buscar ambos em paralelo
       const [itemsRes, categoriesRes] = await Promise.all([
-        api.get('/items'), // API pública de listagem de itens
-        api.get('/categories'), // API pública de listagem de categorias
+        api.get('/items'),
+        api.get('/categories'),
       ]);
       setItems(itemsRes.data);
       setCategories(categoriesRes.data);
@@ -57,65 +47,58 @@ export default function AdminItemsPage() {
     }
   }
 
-  // 2. Função para CRIAR um novo item
   async function handleCreateItem(data: ItemFormData) {
     try {
-      // Usamos a rota ADMIN de criação de item
       await api.post('/admin/items', data);
       alert('Item criado com sucesso!');
-      reset(); // Limpa o formulário
-      fetchData(); // Atualiza a lista de itens
+      reset();
+      fetchData();
     } catch (error: any) {
       console.error('Erro ao criar item:', error);
       if (error.response?.status === 400 && error.response.data.message) {
-        alert(error.response.data.message); // Ex: "A categoria informada não existe"
+        alert(error.response.data.message);
       } else {
         alert('Falha ao criar item.');
       }
     }
   }
 
-  // 3. Função para DELETAR um item
   async function handleDeleteItem(id: string) {
     if (!confirm('Tem certeza que deseja deletar este item?')) {
       return;
     }
-
     try {
-      // Usamos a rota ADMIN de delete
       await api.delete(`/admin/items/${id}`);
       alert('Item deletado com sucesso!');
-      fetchData(); // Atualiza a lista
+      fetchData();
     } catch (error: any) {
       console.error('Erro ao deletar item:', error);
       if (error.response?.status === 409) {
-        alert(error.response.data.message); // Ex: "Item faz parte de pedidos"
+        alert(error.response.data.message);
       } else {
         alert('Falha ao deletar item.');
       }
     }
   }
 
-  // Busca os dados iniciais quando o componente é montado
   useEffect(() => {
     fetchData();
   }, []);
 
-  // --- Renderização (JSX) ---
   return (
     <div className="container mx-auto max-w-6xl">
       <h1 className="mb-6 text-3xl font-bold text-zinc-900 dark:text-white">
         Gerenciar Itens do Cardápio
       </h1>
 
-      {/* 1. Formulário de Criação */}
+      {/* Formulário */}
       <form
         onSubmit={handleSubmit(handleCreateItem)}
         className="mb-8 rounded-lg bg-white p-6 shadow-md dark:bg-zinc-800"
       >
         <h2 className="mb-4 text-xl font-semibold">Novo Item</h2>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {/* Coluna Descrição */}
+          {/* Descrição */}
           <div>
             <label
               htmlFor="description"
@@ -128,7 +111,7 @@ export default function AdminItemsPage() {
               type="text"
               placeholder="Ex: Pizza Calabresa"
               className="w-full rounded-md border border-zinc-300 bg-zinc-50 p-2.5 text-zinc-900 focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:placeholder-zinc-400"
-              {...register('description')} //
+              {...register('description')}
             />
             {errors.description && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -137,7 +120,7 @@ export default function AdminItemsPage() {
             )}
           </div>
 
-          {/* Coluna Preço */}
+          {/* Preço */}
           <div>
             <label
               htmlFor="unitPrice"
@@ -148,10 +131,10 @@ export default function AdminItemsPage() {
             <input
               id="unitPrice"
               type="number"
-              step="0.01" // Permite centavos
+              step="0.01"
               placeholder="45.50"
               className="w-full rounded-md border border-zinc-300 bg-zinc-50 p-2.5 text-zinc-900 focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:placeholder-zinc-400"
-              {...register('unitPrice', { valueAsNumber: true })} //
+              {...register('unitPrice', { valueAsNumber: true })}
             />
             {errors.unitPrice && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -160,7 +143,7 @@ export default function AdminItemsPage() {
             )}
           </div>
 
-          {/* Coluna Categoria */}
+          {/* Categoria */}
           <div>
             <label
               htmlFor="categoryId"
@@ -171,7 +154,7 @@ export default function AdminItemsPage() {
             <select
               id="categoryId"
               className="w-full rounded-md border border-zinc-300 bg-zinc-50 p-2.5 text-zinc-900 focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white"
-              {...register('categoryId')} //
+              {...register('categoryId')}
             >
               <option value="">Selecione...</option>
               {categories.map((category) => (
@@ -198,7 +181,7 @@ export default function AdminItemsPage() {
         </div>
       </form>
 
-      {/* 2. Lista de Itens Existentes */}
+      {/* Lista */}
       <div className="rounded-lg bg-white p-6 shadow-md dark:bg-zinc-800">
         <h2 className="mb-4 text-xl font-semibold">Itens Existentes</h2>
         {isLoading ? (
@@ -229,7 +212,6 @@ export default function AdminItemsPage() {
                       {item.description}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-zinc-600 dark:text-zinc-300">
-                      {/* Formatando o preço para BRL */}
                       {item.unitPrice.toLocaleString('pt-BR', {
                         style: 'currency',
                         currency: 'BRL',

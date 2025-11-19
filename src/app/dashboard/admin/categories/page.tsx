@@ -4,35 +4,28 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Category } from '@prisma/client'; // Importando o tipo do Prisma
-import { api } from '@/lib/axios'; // Nossa API axios
-import { categorySchema } from '@/lib/schemas'; // Nosso schema de criação
+import { Category } from '@/types/user'; // <--- CORREÇÃO AQUI
+import { api } from '@/lib/axios';
+import { categorySchema } from '@/lib/schemas';
 
-// Tipo para os dados do formulário
 type CategoryFormData = z.infer<typeof categorySchema>;
 
 export default function AdminCategoriesPage() {
-  // Estado para armazenar a lista de categorias buscadas da API
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // Hook do formulário para "Criar Nova Categoria"
   const {
     register,
     handleSubmit,
-    reset, // Para limpar o formulário após o envio
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
   });
 
-  // --- Funções de API ---
-
-  // 1. Função para buscar todas as categorias
   async function fetchCategories() {
     setIsLoadingData(true);
     try {
-      // Usamos a rota PÚBLICA de listagem de categorias
       const response = await api.get('/categories');
       setCategories(response.data);
     } catch (error) {
@@ -43,14 +36,12 @@ export default function AdminCategoriesPage() {
     }
   }
 
-  // 2. Função para CRIAR uma nova categoria
   async function handleCreateCategory(data: CategoryFormData) {
     try {
-      // Usamos a rota ADMIN de criação
       await api.post('/admin/categories', data);
       alert('Categoria criada com sucesso!');
-      reset(); // Limpa o formulário
-      fetchCategories(); // Atualiza a lista de categorias
+      reset(); 
+      fetchCategories(); 
     } catch (error: any) {
       console.error('Erro ao criar categoria:', error);
       if (error.response?.status === 409) {
@@ -61,41 +52,35 @@ export default function AdminCategoriesPage() {
     }
   }
 
-  // 3. Função para DELETAR uma categoria
   async function handleDeleteCategory(id: string) {
-    // Confirmação simples
     if (!confirm('Tem certeza que deseja deletar esta categoria?')) {
       return;
     }
-
     try {
-      // Usamos a rota ADMIN de delete
       await api.delete(`/admin/categories/${id}`);
       alert('Categoria deletada com sucesso!');
-      fetchCategories(); // Atualiza a lista
+      fetchCategories(); 
     } catch (error: any) {
       console.error('Erro ao deletar categoria:', error);
       if (error.response?.status === 409) {
-        alert(error.response.data.message); //
+        alert(error.response.data.message); 
       } else {
         alert('Falha ao deletar categoria.');
       }
     }
   }
 
-  // Busca os dados iniciais quando o componente é montado
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  // --- Renderização (JSX) ---
   return (
     <div className="container mx-auto max-w-4xl">
       <h1 className="mb-6 text-3xl font-bold text-zinc-900 dark:text-white">
         Gerenciar Categorias
       </h1>
 
-      {/* 1. Formulário de Criação */}
+      {/* Formulário */}
       <form
         onSubmit={handleSubmit(handleCreateCategory)}
         className="mb-8 rounded-lg bg-white p-6 shadow-md dark:bg-zinc-800"
@@ -111,7 +96,7 @@ export default function AdminCategoriesPage() {
               type="text"
               placeholder="Ex: Pizzas, Bebidas, Sobremesas"
               className="w-full rounded-md border border-zinc-300 bg-zinc-50 p-2.5 text-zinc-900 focus:border-blue-500 focus:ring-blue-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white dark:placeholder-zinc-400"
-              {...register('description')} //
+              {...register('description')}
             />
             {errors.description && (
               <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -129,7 +114,7 @@ export default function AdminCategoriesPage() {
         </div>
       </form>
 
-      {/* 2. Lista de Categorias Existentes */}
+      {/* Lista */}
       <div className="rounded-lg bg-white p-6 shadow-md dark:bg-zinc-800">
         <h2 className="mb-4 text-xl font-semibold">Categorias Existentes</h2>
         {isLoadingData ? (

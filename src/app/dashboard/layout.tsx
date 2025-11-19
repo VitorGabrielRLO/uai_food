@@ -1,10 +1,12 @@
-'use client'; // Obrigatório para usar hooks (useAuth, useRouter, useEffect)
+// Em: src/app/dashboard/layout.tsx
+'use client'; 
 
-import { useAuth } from '@/context/AuthContext'; // Nosso hook de autenticação
+import { useAuth } from '@/context/AuthContext'; 
 import { useRouter } from 'next/navigation';
 import { useEffect, ReactNode } from 'react';
-import { UserType } from '@prisma/client'; // Tipagem do Prisma
+import { UserType } from '@prisma/client'; 
 import Link from 'next/link';
+import { CartProvider } from '@/context/CartContext'; // <-- 1. IMPORTAR
 
 // --- Componente de Navbar (Barra de Navegação) ---
 function Navbar({
@@ -13,7 +15,7 @@ function Navbar({
   onLogout,
 }: {
   userName: string;
-  userType: UserType; //
+  userType: UserType; 
   onLogout: () => void;
 }) {
   return (
@@ -26,22 +28,22 @@ function Navbar({
       </Link>
       <div className="flex items-center gap-4">
         {/* Mostra links de Admin se o usuário for ADMIN */}
-        {userType === 'ADMIN' && ( //
+        {userType === 'ADMIN' && ( 
           <>
             <Link
-              href="/dashboard/admin/categories" // (Criaremos depois)
+              href="/dashboard/admin/categories" 
               className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500"
             >
               Categorias
             </Link>
             <Link
-              href="/dashboard/admin/items" // (Criaremos depois)
+              href="/dashboard/admin/items" 
               className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500"
             >
               Itens
             </Link>
             <Link
-              href="/dashboard/admin/orders" // (Criaremos depois)
+              href="/dashboard/admin/orders" 
               className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500"
             >
               Fila de Pedidos
@@ -49,6 +51,16 @@ function Navbar({
           </>
         )}
         
+        {/* Links para CLIENTE */}
+        {userType === 'CLIENT' && ( // <-- MOSTRAR SÓ PARA CLIENTE
+          <Link
+            href="/dashboard/order" // <-- 2. ADICIONAR LINK
+            className="rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+          >
+            Fazer Pedido
+          </Link>
+        )}
+
         {/* Links para todos os usuários logados */}
         <Link
           href="/dashboard/my-orders" // (Criaremos depois)
@@ -84,34 +96,30 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // 1. Espera o AuthContext terminar de carregar (verificar o localStorage)
     if (isLoading) {
       return;
     }
-
-    // 2. Se não estiver carregando E não estiver autenticado, redireciona
     if (!isAuthenticated) {
-      router.replace('/'); // Volta para a página de login
+      router.replace('/'); 
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // 3. Enquanto carrega ou espera o redirecionamento, não mostra nada
-  // Isso evita um "flash" da página de dashboard antes do usuário ser redirecionado
   if (isLoading || !isAuthenticated) {
     return null; // ou você pode retornar um <Spinner />
   }
 
-  // 4. Se chegou aqui, o usuário está logado. Mostra o layout.
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-900">
-      <Navbar
-        userName={user?.name || 'Usuário'} //
-        userType={user?.userType as UserType}
-        onLogout={logout}
-      />
-      <main className="flex-1 p-8">
-        {children} {/* Aqui é onde a 'page.tsx' do dashboard será renderizada */}
-      </main>
-    </div>
+    <CartProvider> {/* <-- 3. ADICIONAR O PROVEDOR DO CARRINHO */}
+      <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-900">
+        <Navbar
+          userName={user?.name || 'Usuário'} 
+          userType={user?.userType as UserType}
+          onLogout={logout}
+        />
+        <main className="flex-1 p-8">
+          {children} 
+        </main>
+      </div>
+    </CartProvider>
   );
 }

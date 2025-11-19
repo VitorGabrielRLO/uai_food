@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/axios';
-import { DetailedOrder } from '@/types/order'; // Nosso tipo customizado
-import { PaymentMethod } from '@prisma/client';
+import { DetailedOrder } from '@/types/order';
+import { PaymentMethod } from '@/types/user'; // <--- CORREÇÃO AQUI
 
 // --- Funções Auxiliares (Helpers) ---
 
-// Formata data (ex: 10/11/2025 14:30)
 function formatDate(dateString: string) {
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
@@ -15,7 +14,6 @@ function formatDate(dateString: string) {
   }).format(new Date(dateString));
 }
 
-// Calcula o total do pedido
 function calculateOrderTotal(items: DetailedOrder['items']) {
   const total = items.reduce((sum, orderItem) => {
     return sum + orderItem.item.unitPrice * orderItem.quantity;
@@ -27,7 +25,6 @@ function calculateOrderTotal(items: DetailedOrder['items']) {
   });
 }
 
-// Mapeia os métodos de pagamento para um texto amigável
 const paymentMethodLabels: Record<PaymentMethod, string> = {
   CASH: 'Dinheiro',
   CREDIT: 'Crédito',
@@ -40,14 +37,11 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<DetailedOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Status possíveis para o admin selecionar
   const orderStatuses = ['PENDING', 'CONFIRMED', 'IN_DELIVERY', 'DELIVERED', 'CANCELED'];
 
-  // 1. Função para buscar todos os pedidos
   async function fetchOrders() {
     setIsLoading(true);
     try {
-      // Usamos a rota ADMIN de listagem de pedidos
       const response = await api.get('/admin/orders');
       setOrders(response.data);
     } catch (error) {
@@ -58,15 +52,11 @@ export default function AdminOrdersPage() {
     }
   }
 
-  // 2. Função para ATUALIZAR o status de um pedido
   async function handleUpdateStatus(orderId: string, newStatus: string) {
     try {
-      // Usamos a rota ADMIN de atualização de status
       await api.patch(`/admin/orders/${orderId}`, {
         status: newStatus,
       });
-      // Atualiza o estado localmente (para resposta visual rápida)
-      // ou busca tudo de novo (fetchOrders())
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
           order.id === orderId ? { ...order, status: newStatus } : order,
@@ -79,12 +69,10 @@ export default function AdminOrdersPage() {
     }
   }
 
-  // Busca os dados iniciais
   useEffect(() => {
     fetchOrders();
   }, []);
 
-  // --- Renderização (JSX) ---
   return (
     <div className="container mx-auto max-w-7xl">
       <h1 className="mb-6 text-3xl font-bold text-zinc-900 dark:text-white">
@@ -96,14 +84,13 @@ export default function AdminOrdersPage() {
       ) : orders.length === 0 ? (
         <p className="dark:text-zinc-400">Nenhum pedido encontrado.</p>
       ) : (
-        // Layout em colunas (estilo Kanban/Trello)
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {orders.map((order) => (
             <div
               key={order.id}
               className="flex flex-col rounded-lg bg-white p-5 shadow-md dark:bg-zinc-800"
             >
-              {/* Cabeçalho do Cartão */}
+              {/* Cabeçalho */}
               <div className="mb-4 border-b pb-3 dark:border-zinc-700">
                 <h2 className="font-semibold dark:text-white">
                   Pedido de: {order.user.name}
@@ -116,7 +103,7 @@ export default function AdminOrdersPage() {
                 </p>
               </div>
 
-              {/* Itens do Pedido */}
+              {/* Itens */}
               <ul className="flex-1 space-y-2">
                 {order.items.map((orderItem) => (
                   <li
@@ -135,7 +122,7 @@ export default function AdminOrdersPage() {
                 ))}
               </ul>
 
-              {/* Rodapé do Cartão */}
+              {/* Rodapé */}
               <div className="mt-4 border-t pt-4 dark:border-zinc-700">
                 <div className="mb-3 flex justify-between font-bold dark:text-white">
                   <span>Total:</span>
@@ -148,7 +135,7 @@ export default function AdminOrdersPage() {
                   </span>
                 </div>
 
-                {/* Seletor de Status */}
+                {/* Status */}
                 <div>
                   <label
                     htmlFor={`status-${order.id}`}

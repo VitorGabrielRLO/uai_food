@@ -1,7 +1,6 @@
 import { z } from 'zod';
-import { PaymentMethod } from '@prisma/client';
+// REMOVIDA a importação do @prisma/client
 
-// Schema para o registro de usuário (JÁ EXISTE)
 export const registerSchema = z.object({
   name: z.string().min(3, {
     message: 'O nome deve ter pelo menos 3 caracteres',
@@ -14,7 +13,6 @@ export const registerSchema = z.object({
   }),
 });
 
-// ADICIONE ESTE NOVO SCHEMA
 export const loginSchema = z.object({
   phone: z.string().min(10, {
     message: 'O telefone é obrigatório',
@@ -33,27 +31,25 @@ export const categorySchema = z.object({
 export const itemSchema = z.object({
   description: z.string().min(3, 'A descrição é obrigatória.'),
   unitPrice: z.number().positive('O preço deve ser um número positivo.'),
-  categoryId: z.string().cuid('A Categoria é obrigatória.'), // CUID é o formato do ID do Prisma
+  categoryId: z.string().cuid('A Categoria é obrigatória.'),
 });
 
-export const updateCategorySchema = categorySchema.partial(); // Todos os campos de categorySchema se tornam opcionais
-export const updateItemSchema = itemSchema.partial(); // Todos os campos de itemSchema se tornam opcionais
+export const updateCategorySchema = categorySchema.partial();
+export const updateItemSchema = itemSchema.partial();
 
 const orderItemSchema = z.object({
   itemId: z.string().cuid('ID do item inválido'),
   quantity: z.number().int().positive('A quantidade deve ser pelo menos 1'),
 });
 
-// Schema para a criação de um novo pedido (feito pelo CLIENTE)
+// CORREÇÃO AQUI: Usamos z.enum com os valores manuais
 export const createOrderSchema = z.object({
-  paymentMethod: z.nativeEnum(PaymentMethod, { // Valida contra o Enum do Prisma
+  paymentMethod: z.enum(['CASH', 'DEBIT', 'CREDIT', 'PIX'], {
     errorMap: () => ({ message: 'Método de pagamento inválido' }),
   }),
-  // O pedido deve ter pelo menos um item
   items: z.array(orderItemSchema).min(1, 'O pedido deve ter pelo menos um item'),
 });
 
-// Schema para atualização de status (feito pelo ADMIN)
 export const updateOrderStatusSchema = z.object({
-  status: z.string().min(3, 'O status é obrigatório'), // Ex: "CONFIRMED", "IN_DELIVERY", etc.
+  status: z.string().min(3, 'O status é obrigatório'),
 });

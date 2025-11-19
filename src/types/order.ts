@@ -1,15 +1,33 @@
-import { Order, OrderItem, Item, User } from '@prisma/client';
+// CORREÇÃO AQUI: Importa NOSSOS tipos, não os do Prisma
+import { Item, User, PaymentMethod } from './user';
 
-// Este tipo representa um OrderItem que também
-// inclui os detalhes do Item associado
-export type DetailedOrderItem = OrderItem & {
-  item: Pick<Item, 'description' | 'unitPrice'>; //
+// Tipo base para Order (privado para este módulo)
+type OrderBase = {
+  id: string;
+  status: string;
+  paymentMethod: PaymentMethod;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
 };
 
-// Este é o tipo principal da nossa página:
-// Um Pedido (Order) que inclui os detalhes do Usuário
-// e uma lista de Itens de Pedido Detalhados
-export type DetailedOrder = Order & {
-  user: Pick<User, 'name' | 'phone'>; //
-  items: DetailedOrderItem[]; //
+// Tipo base para OrderItem (privado para este módulo)
+type OrderItemBase = {
+  id: string;
+  quantity: number;
+  orderId: string;
+  itemId: string;
+};
+
+// --- Tipos Exportados ---
+
+// Item de Pedido Detalhado (para mostrar no carrinho/fila)
+export type DetailedOrderItem = OrderItemBase & {
+  item: Pick<Item, 'description' | 'unitPrice'>;
+};
+
+// Pedido Detalhado (para a fila do admin e "meus pedidos")
+export type DetailedOrder = OrderBase & {
+  user: Pick<User, 'name' | 'phone'>;
+  items: DetailedOrderItem[];
 };

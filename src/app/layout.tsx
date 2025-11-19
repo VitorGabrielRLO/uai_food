@@ -1,17 +1,17 @@
 // Em: src/app/layout.tsx
 
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter, Roboto_Mono } from 'next/font/google'; // <-- CORRIGIDO
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext'; // 1. Importar o Provedor
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({ // <-- CORRIGIDO
+  variable: '--font-sans', // <-- CORRIGIDO
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const robotoMono = Roboto_Mono({ // <-- CORRIGIDO
+  variable: '--font-mono', // <-- CORRIGIDO
   subsets: ['latin'],
 });
 
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${robotoMono.variable} antialiased`} // <-- CORRIGIDO
       >
         {/* 2. ESTA LINHA É A CORREÇÃO CRÍTICA */}
         <AuthProvider>{children}</AuthProvider>
