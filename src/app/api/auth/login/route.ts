@@ -28,7 +28,7 @@ import { loginSchema } from '@/lib/schemas';
  * format: password
  * example: "123456"
  * responses:
- * '200':
+ * 200:
  * description: Login bem-sucedido. Retorna o usuário e o token.
  * content:
  * application/json:
@@ -49,12 +49,11 @@ import { loginSchema } from '@/lib/schemas';
  * enum: [CLIENT, ADMIN]
  * token:
  * type: string
- * '401':
+ * 401:
  * description: Não autorizado (senha inválida).
- * '404':
+ * 404:
  * description: Usuário não encontrado (telefone inválido).
  */
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -68,7 +67,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      // 404 Not Found: Usuário não encontrado
       return NextResponse.json(
         { message: 'Telefone ou senha inválidos.' },
         { status: 404 },
@@ -79,7 +77,6 @@ export async function POST(req: NextRequest) {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      // 401 Unauthorized: Senha incorreta
       return NextResponse.json(
         { message: 'Telefone ou senha inválidos.' },
         { status: 401 },
@@ -96,16 +93,15 @@ export async function POST(req: NextRequest) {
       {
         userId: user.id,
         phone: user.phone,
-        userType: user.userType, //
+        userType: user.userType,
       },
       secret,
       {
-        expiresIn: '1d', // Token expira em 1 dia
+        expiresIn: '1d',
       },
     );
 
     // 5. Retornar o token para o cliente
-    // (Também removemos a senha da resposta)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
 
@@ -114,7 +110,6 @@ export async function POST(req: NextRequest) {
       token: token,
     });
   } catch (error) {
-    // Erro de validação do Zod
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { message: 'Dados inválidos', errors: error.errors },
@@ -122,8 +117,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Outros erros
-    console.error(error); // Log do erro no servidor
+    console.error(error);
     return NextResponse.json(
       { message: 'Erro interno do servidor.' },
       { status: 500 },

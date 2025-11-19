@@ -4,10 +4,104 @@ import { prisma } from '@/lib/prisma';
 import { createOrderSchema } from '@/lib/schemas';
 import { headers } from 'next/headers';
 
-// POST (CREATE ORDER) - Rota protegida para CLIENTES
+/**
+ * @openapi
+ * /api/orders:
+ * post:
+ * tags:
+ * - Pedidos (Cliente)
+ * summary: Cria um novo pedido
+ * description: Cria um pedido para o usuário logado com os itens selecionados. Requer autenticação.
+ * security:
+ * - bearerAuth: []
+ * requestBody:
+ * required: true
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * required:
+ * - paymentMethod
+ * - items
+ * properties:
+ * paymentMethod:
+ * type: string
+ * enum: [CASH, DEBIT, CREDIT, PIX]
+ * example: "PIX"
+ * items:
+ * type: array
+ * minItems: 1
+ * items:
+ * type: object
+ * required:
+ * - itemId
+ * - quantity
+ * properties:
+ * itemId:
+ * type: string
+ * description: ID do item no banco de dados
+ * quantity:
+ * type: integer
+ * minimum: 1
+ * example: 2
+ * responses:
+ * 201:
+ * description: Pedido criado com sucesso.
+ * 400:
+ * description: Dados inválidos ou item não encontrado.
+ * 401:
+ * description: Usuário não autenticado.
+ * 500:
+ * description: Erro interno do servidor.
+ *
+ * get:
+ * tags:
+ * - Pedidos (Cliente)
+ * summary: Lista os pedidos do usuário
+ * description: Retorna o histórico de pedidos do usuário logado. Requer autenticação.
+ * security:
+ * - bearerAuth: []
+ * responses:
+ * 200:
+ * description: Lista de pedidos recuperada com sucesso.
+ * content:
+ * application/json:
+ * schema:
+ * type: array
+ * items:
+ * type: object
+ * properties:
+ * id:
+ * type: string
+ * status:
+ * type: string
+ * example: "PENDING"
+ * paymentMethod:
+ * type: string
+ * createdAt:
+ * type: string
+ * format: date-time
+ * items:
+ * type: array
+ * items:
+ * type: object
+ * properties:
+ * quantity:
+ * type: integer
+ * item:
+ * type: object
+ * properties:
+ * description:
+ * type: string
+ * unitPrice:
+ * type: number
+ * 401:
+ * description: Usuário não autenticado.
+ * 500:
+ * description: Erro interno do servidor.
+ */
 export async function POST(req: NextRequest) {
   try {
-    // 1. Pegar o ID do usuário (injetado pelo middleware)
     const userId = headers().get('x-user-id');
     if (!userId) {
       return NextResponse.json(
@@ -16,35 +110,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Validar o corpo da requisição
     const body = await req.json();
     const { paymentMethod, items } = createOrderSchema.parse(body);
 
-    // 3. Iniciar uma Transação Prisma
-    // Isso garante que ou tudo (Order + OrderItems) é criado, ou nada é.
     const newOrder = await prisma.$transaction(async (tx) => {
-      // 3a. Criar o Pedido (Order)
       const order = await tx.order.create({
         data: {
-          userId: userId, // ID do cliente logado
+          userId: userId,
           paymentMethod: paymentMethod,
-          status: 'PENDING', // Status inicial padrão
+          status: 'PENDING',
         },
       });
 
-      // 3b. Preparar os Itens do Pedido (OrderItems)
       const orderItemsData = items.map((item) => ({
         orderId: order.id,
         itemId: item.itemId,
         quantity: item.quantity,
       }));
 
-      // 3c. Salvar os Itens do Pedido no banco
       await tx.orderItem.createMany({
         data: orderItemsData,
       });
 
-      return order; // Retorna o pedido principal
+      return order;
     });
 
     return NextResponse.json(newOrder, { status: 201 });
@@ -52,8 +140,7 @@ export async function POST(req: NextRequest) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ errors: error.errors }, { status: 400 });
     }
-    // Erro do Prisma (ex: itemId não existe)
-    if (error.code === 'P2003') {
+    if ((error as any).code === 'P2003') {
       return NextResponse.json(
         { message: 'Um dos itens informados não existe.' },
         { status: 400 },
@@ -67,10 +154,8 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET (READ MY ORDERS) - Rota protegida para CLIENTES
 export async function GET() {
   try {
-    // 1. Pegar o ID do usuário (injetado pelo middleware)
     const userId = headers().get('x-user-id');
     if (!userId) {
       return NextResponse.json(
@@ -79,19 +164,17 @@ export async function GET() {
       );
     }
 
-    // 2. Buscar pedidos do usuário logado
     const orders = await prisma.order.findMany({
       where: {
         userId: userId,
       },
       orderBy: {
-        createdAt: 'desc', // Mais recentes primeiro
+        createdAt: 'desc',
       },
-      // Incluir os detalhes dos itens de cada pedido
       include: {
-        items: { //
+        items: {
           include: {
-            item: { //
+            item: {
               select: {
                 description: true,
                 unitPrice: true,

@@ -1,17 +1,16 @@
-// Em: src/app/layout.tsx
-
 import type { Metadata } from 'next';
-import { Inter, Roboto_Mono } from 'next/font/google'; // <-- CORRIGIDO
+import { Inter, Roboto_Mono } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/context/AuthContext'; // 1. Importar o Provedor
+import { AuthProvider } from '@/context/AuthContext';
+import { Toaster } from 'sonner'; // <-- Biblioteca de notificações
 
-const inter = Inter({ // <-- CORRIGIDO
-  variable: '--font-sans', // <-- CORRIGIDO
+const inter = Inter({
+  variable: '--font-sans',
   subsets: ['latin'],
 });
 
-const robotoMono = Roboto_Mono({ // <-- CORRIGIDO
-  variable: '--font-mono', // <-- CORRIGIDO
+const robotoMono = Roboto_Mono({
+  variable: '--font-mono',
   subsets: ['latin'],
 });
 
@@ -28,10 +27,12 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body
-        className={`${inter.variable} ${robotoMono.variable} antialiased`} // <-- CORRIGIDO
+        className={`${inter.variable} ${robotoMono.variable} antialiased`}
       >
-        {/* 2. ESTA LINHA É A CORREÇÃO CRÍTICA */}
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <Toaster position="top-right" richColors /> {/* <-- Componente de notificação */}
+        </AuthProvider>
       </body>
     </html>
   );

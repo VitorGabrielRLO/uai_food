@@ -1,4 +1,3 @@
-// Em: src/app/dashboard/order/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,8 +5,9 @@ import { api } from '@/lib/axios';
 import { Item, PaymentMethod } from '@prisma/client';
 import { useCart } from '@/context/CartContext';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner'; // <-- Importando o toast
 
-// Tipo para o Item com a categoria (para agrupar)
+// Tipo para o Item com a categoria
 type ItemWithCategory = Item & {
   category: {
     description: string;
@@ -45,7 +45,10 @@ function Menu({
                   })}
                 </p>
                 <button
-                  onClick={() => addItem(item)}
+                  onClick={() => {
+                    addItem(item);
+                    toast.success(`${item.description} adicionado!`); // <-- Feedback visual
+                  }}
                   className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 >
                   Adicionar
@@ -74,13 +77,12 @@ function Cart() {
 
   async function handleFinishOrder() {
     if (items.length === 0) {
-      alert('Seu carrinho está vazio.');
+      toast.warning('Seu carrinho está vazio.'); // <-- Toast
       return;
     }
     
     setIsSubmitting(true);
     
-    // 1. Montar o payload para a API
     const payload = {
       paymentMethod: paymentMethod,
       items: items.map(cartItem => ({
@@ -90,16 +92,16 @@ function Cart() {
     };
 
     try {
-      // 2. Enviar para a API (o middleware vai injetar o user ID)
-      await api.post('/orders', payload); //
+      await api.post('/orders', payload);
       
-      alert('Pedido realizado com sucesso!');
-      clearCart(); // Limpa o carrinho
-      router.push('/dashboard/my-orders'); // Redireciona para a tela de "Meus Pedidos"
+      toast.success('Pedido realizado com sucesso!'); // <-- Toast de sucesso
+      clearCart(); 
+      router.push('/dashboard/my-orders'); 
       
     } catch (error: any) {
       console.error('Erro ao finalizar pedido:', error);
-      alert(`Falha ao registrar o pedido: ${error.response?.data?.message || 'Tente novamente.'}`);
+      const msg = error.response?.data?.message || 'Tente novamente.';
+      toast.error(`Falha ao registrar o pedido: ${msg}`); // <-- Toast de erro
     } finally {
       setIsSubmitting(false);
     }
@@ -114,7 +116,6 @@ function Cart() {
         </p>
       ) : (
         <>
-          {/* Lista de Itens no Carrinho */}
           <div className="space-y-4">
             {items.map((cartItem) => (
               <div
@@ -156,7 +157,6 @@ function Cart() {
             ))}
           </div>
 
-          {/* Total e Pagamento */}
           <div className="mt-6">
             <div className="mb-4 flex justify-between text-lg font-bold dark:text-white">
               <span>Total:</span>
@@ -168,7 +168,6 @@ function Cart() {
               </span>
             </div>
 
-            {/* Seletor de Pagamento */}
             <div className="mb-4">
               <label
                 htmlFor="paymentMethod"
@@ -189,7 +188,6 @@ function Cart() {
               </select>
             </div>
 
-            {/* Botão Finalizar */}
             <button
               onClick={handleFinishOrder}
               disabled={isSubmitting}
@@ -211,13 +209,11 @@ export default function OrderPage() {
   >({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // Função para buscar os itens e agrupá-los por categoria
   async function fetchMenu() {
     try {
-      const response = await api.get<ItemWithCategory[]>('/items'); // Rota pública
+      const response = await api.get<ItemWithCategory[]>('/items'); 
       const items = response.data;
 
-      // Agrupar itens por categoria
       const grouped = items.reduce(
         (acc, item) => {
           const categoryName = item.category.description;
@@ -233,13 +229,12 @@ export default function OrderPage() {
       setItemsByCategory(grouped);
     } catch (error) {
       console.error('Erro ao buscar cardápio:', error);
-      alert('Não foi possível carregar o cardápio.');
+      toast.error('Não foi possível carregar o cardápio.'); // <-- Toast
     } finally {
       setIsLoading(false);
     }
   }
 
-  // Busca os dados iniciais
   useEffect(() => {
     fetchMenu();
   }, []);
@@ -250,17 +245,14 @@ export default function OrderPage() {
     );
   }
 
-  // Layout da página: Cardápio à esquerda, Carrinho à direita (em telas grandes)
   return (
     <div className="container mx-auto max-w-7xl">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Coluna do Cardápio (ocupa 2/3) */}
         <div className="lg:col-span-2">
           <Menu itemsByCategory={itemsByCategory} />
         </div>
 
-        {/* Coluna do Carrinho (ocupa 1/3) */}
-        <div className="lg:sticky lg:top-8 h-fit"> {/* Torna o carrinho "grudento" */}
+        <div className="lg:sticky lg:top-8 h-fit">
           <Cart />
         </div>
       </div>

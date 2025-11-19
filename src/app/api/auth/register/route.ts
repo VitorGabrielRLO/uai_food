@@ -1,9 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/prisma'; // Nosso alias do tsconfig.json
+import { prisma } from '@/lib/prisma';
 import { registerSchema } from '@/lib/schemas';
 
+/**
+ * @openapi
+ * /api/auth/register:
+ * post:
+ * tags:
+ * - Autenticação
+ * summary: Registra um novo usuário (Cliente)
+ * description: Cria uma nova conta de usuário com perfil de CLIENTE.
+ * requestBody:
+ * required: true
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * required:
+ * - name
+ * - phone
+ * - password
+ * properties:
+ * name:
+ * type: string
+ * example: "João da Silva"
+ * phone:
+ * type: string
+ * description: Telefone com DDD (apenas números ou com formatação)
+ * example: "34999998888"
+ * password:
+ * type: string
+ * format: password
+ * minLength: 6
+ * example: "senha123"
+ * responses:
+ * 201:
+ * description: Usuário criado com sucesso.
+ * content:
+ * application/json:
+ * schema:
+ * type: object
+ * properties:
+ * id:
+ * type: string
+ * name:
+ * type: string
+ * phone:
+ * type: string
+ * userType:
+ * type: string
+ * example: "CLIENT"
+ * createdAt:
+ * type: string
+ * format: date-time
+ * 400:
+ * description: Dados inválidos enviados.
+ * 409:
+ * description: Telefone já cadastrado.
+ * 500:
+ * description: Erro interno do servidor.
+ */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -17,7 +75,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingUser) {
-      // 409 Conflict: Recurso já existe
       return NextResponse.json(
         { message: 'Este telefone já está cadastrado.' },
         { status: 409 },
@@ -32,8 +89,7 @@ export async function POST(req: NextRequest) {
       data: {
         name: name,
         phone: phone,
-        password: hashedPassword, //
-        // userType será CLIENT por padrão, como definido no schema.prisma
+        password: hashedPassword,
       },
     });
 
@@ -41,20 +97,15 @@ export async function POST(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = user;
 
-    // 201 Created: Recurso criado com sucesso
     return NextResponse.json(userWithoutPassword, { status: 201 });
   } catch (error) {
-    // Se o erro for do Zod (validação falhou)
     if (error instanceof z.ZodError) {
-      // 400 Bad Request: Dados inválidos
       return NextResponse.json(
         { message: 'Dados inválidos', errors: error.errors },
         { status: 400 },
       );
     }
 
-    // Outros erros (ex: falha ao conectar no banco)
-    // 500 Internal Server Error
     return NextResponse.json(
       { message: 'Erro interno do servidor.' },
       { status: 500 },
